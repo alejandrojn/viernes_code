@@ -1,6 +1,6 @@
 # Viernes de Código
 
-
+@icn-camera
 
 Materiales del curso Introducción al análisis de datos en @icn-camera  y Python. Departamento de Economía, Uninorte, Colombia
 
