@@ -2,6 +2,6 @@
 
 
 
-Materiales del curso Introducción al análisis de datos en  y Python. Departamento de Economía, Uninorte, Colombia
+Materiales del curso Introducción al análisis de datos en @icn-camera  y Python. Departamento de Economía, Uninorte, Colombia
 
-`r icons::fontawesome("rocket")`
+[`r fa("r-project", fill = "steelblue")`](https://www.rstudio.com)
