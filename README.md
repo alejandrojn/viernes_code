@@ -1,2 +1,7 @@
-# viernes_code
-Materiales del curso Introducción al análisis de datos en R y Python. Departamento de Economía, Uninorte, Colombia
+# Viernes de Código
+
+
+
+Materiales del curso Introducción al análisis de datos en  y Python. Departamento de Economía, Uninorte, Colombia
+
+`r fontawesome::fa("rocket")`
