@@ -1,7 +1,3 @@
 # Viernes de Código
 
-@icn-camera
-
-Materiales del curso Introducción al análisis de datos en  y Python. Departamento de Economía, Uninorte, Colombia
-
-`r icons::fontawesome("rocket")`
+@octocat :+1: This PR looks great - it's ready to merge! :shipit:
