@@ -9,7 +9,7 @@ Este es un taller introductorio al análisis de datos en R y Python. Está dirig
 
 ## Cronograma de actividades
 
-- Introducción a R: Febrero 18
+- Introducción a R: Febrero 18 [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/01-intro_R.html)
 - Introducción a Python: Febrero 25
 - Data wrangling en R: Marzo 4
 - Data wrangling en Python: Marzo 11
