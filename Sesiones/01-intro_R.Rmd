@@ -1,0 +1,211 @@
+---
+title: "Introducción al análisis de datos en R"
+Author: Andrés Vargas
+output:
+  html_document:
+    theme: flatly
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 3
+    number_sections: TRUE
+---
+
+```{r setup_prog, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  comment = NA, 
+  warning = FALSE, 
+  message = FALSE
+    )
+library(fontawesome)
+here::i_am("Sesiones/01-intro_R.Rmd")
+library(here)
+here()
+```
+
+## Propósito del curso
+
+Aborda tópicos usualmente ignorados en los cursos de econometría. En esos cursos los datos suelen venir listos para estimar. El estudiante termina creyendo que el trabajo empírico se lleva a cabo en unas pocas líneas de programación. NO. Nada más falso que eso. En mi experiencia personal, la estimación viene después de mucho trabajo consiguiendo, ordenando, limpiando, explorando los datos. Esa fase previa consume alrededor del 80% del tiempo de trabajo. Además, solemos desechar las humildes estadísticas descriptivas y la visualización de los datos para concentrarnos en el trabajo serio, las estimaciones de modelos complicados. En mi experiencia, el poder interpretativo del investigador solo puede ser desarrollado después de meterse de lleno en los datos, visualizarlos, hacer cruces de variables, calcular simples estadísticas. Aterrizar de una en los modelos complicados sin todo el trabajo previo es como llegar a un cargo directivo siendo un inocente recien graduado. Todo lo bueno requiere tiempo. 
+
+Y digo investigador porque aún si usted no se dedica a la academía, se dará cuenta que el poder de ser fluido con los datos deriva no de sus habilidades de programación sino de su ingenio para hacer cosas útiles con ellos. De transformarlos en un insumo para decidir mejor. 
+
+En pocas palabras, el diseño de este curso está inspirado en lo que ha sido nuestra experiencia personal y lo que hubiesemos deseado que nos enseñaran en la universidad. 
+
+
+El curso se organiza alrededor del flujo típico de un proyecto
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.cap="Flujo simple de un proyecto"}
+library(DiagrammeR)
+grViz(diagram = "digraph flowchart {
+
+node [fontname = helvetica, shape = oval, style=filled,fillcolor = lightblue, color=lightblue]
+Pregunta
+Datos
+Algoritmo
+Comunicación
+
+Pregunta->Datos->Algoritmo->Comunicación
+}")
+```
+
+
+## ¿Podemos predecir el próximo moviemiento de Bitcoin?
+
+### El propósito
+
+Nuestro objetivo es predecir si en el siguiente momento de mercado el precio de Bitcoin subirá o bajará, de tal manra que nos aude a tomar una posición de inversión. Tomamos intervalos de *trading* de seis horas. 
+
+### Los datos
+
+Los datos son cualquier pieza codificada de la cual podamos extrear información. No son necesariamente números, pero casi siempre requereimos una representación numérica para poder calcular cosas. 
+
+Los datos los obtenemos de multiples formas y vienen en diferentes formatos. En la actualidad, podemos acceder a algunos conjuntos de datos que están en línea sin necesidad de descargar una base de datos. Hoy usaremos los datos dispuestos por [Binance](https://www.binance.com/en/landing/data) a través de una api.
+
+`r fa("r-project", fill = "steelblue")` es un lenguaje de programación y un ambiente para la computación estadística en la que usuarios agregan funcionalidades. En otras palabras, es extensible a través de los paquetes que desarrolla comunidad. Hoy usaremos el paquete [binancer](https://daroczig.github.io/binancer/) para acceder a los datos. 
+
+1. Instale el paquete usando *install.packages("binancer")* en la consola o el script o el chunk de programación. También puede ser a través de la ruta $\text{Tools}\to\quad \text{Install packages}\to \quad \text{binancer}$
+
+2. Cargue el paquete
+
+3. Llame los datos
+
+Vamos a usar intervalos de trading de 6 horas de los últimos 24 días. 
+
+```{r}
+library(binancer)
+library(ggplot2)
+binance_coins_prices()
+bitcoin<- binance_klines('BTCUSDT', interval = '6h',limit=4*24)
+```
+
+En R uno manipula objetos todo el tiempo. Cada objeto tiene unas características, de las cuales dependen lo que podemos hacer con él. Podemos usar objetos simples para construir objetos más complejos. Nuestra base de datos es un objeto, para ver que tipo de objeto es usamos la función **class()**
+
+```{r}
+class(bitcoin)
+```
+
+Dentro de este data frame cada columna corresponde a una *variable*, cada una de las cuales también está en un formato particular. Veamos que variables tenemos
+
+```{r}
+colnames(bitcoin)
+```
+
+Nos interesa conocer el tipo de cada variable. Empecemos por open_time
+
+```{r}
+class(bitcoin$open_time)
+```
+
+Vemos que está corresponde a una fecha. Exploremos volume y symbol
+
+```{r}
+class(bitcoin$volume)
+```
+
+```{r}
+class(bitcoin$symbol)
+```
+
+#### Algo de manipulación (wrangling)
+
+Para nuestro ejercicio solo nos interesan las columnas: open_time, open, high, low, close, close_time. Vamos a crear un nuevo objeto. Hay diferentes maneras de hacer lo mismo. Un camino es usar la función subset o la función select, esta última a través de [Tidyverse](https://www.tidyverse.org/). Veamos
+
+```{r}
+library(tidyverse)
+a<-c("open_time", "open", "high", "low", "close", "close_time")
+bitcoin_s<-bitcoin%>%select(all_of(a))
+```
+
+
+Note que primero creamos el objeto *a*, que es un vector de caracteres, y luego lo usamos dentro de la selección. Esto no es un paso necesario, pero ilustra la idea de crear objetos para combinarlos con otros objetos y producir uno nuevo. 
+
+Como nuestro propósito es la dirección del movimiento en el precio durante el periodo de trading, vamos a crear una variable que llamaremos *direccion*, la cual será *up* si el precio de cierre es mayor al precio de apertura, y *down* si el precio de cierre es menor al precio de apertura
+
+```{r}
+bitcoin_s<-bitcoin_s%>%mutate(direccion=ifelse(close>open,"up","down"))
+```
+
+Verifique que la variable que acabamos de crear es *character*
+
+También vamos a crear una variable que llamaremos RSI, Relative Strength Index, que usaremos en el modelo de predicción. Definimos una ventana de 7 sesiones, y contamos el número de veces en las que el precio subió y el número de veces en las que bajó y aplicamos la siguiente formula
+
+$$
+RSI=100-\dfrac{100}{1+RS}
+$$
+
+Donde 
+
+$$
+RS=\dfrac{\text{número de subidas}}{\text{número de bajadas}}
+$$
+
+```{r}
+library(zoo)
+bitcoin_s<-bitcoin_s%>%mutate(move=ifelse(direccion=="up",1,0))
+bitcoin_s<-bitcoin_s%>%mutate(rs=rollmean(move,k=7,fill=NA,align="right"))
+bitcoin_s<-bitcoin_s%>%mutate(rsi=100-(100/(1+rs)))
+```
+
+
+### Visualización
+
+
+Veamos primero como se comporta la serie de precio de cierre a lo largo del tiempo analizado. Para ello utilizaremos la función *ggplot* que hace parte del paquete *ggplot2*. Este paquete queda activado cuando hacemos "library(tidyverse)". 
+
+```{r}
+close.plot<-ggplot(bitcoin_s,aes(x=close_time,y=close))+geom_line()
+close.plot
+```
+
+Tambien podemos usar el paquete *plotly*
+
+```{r}
+library(plotly)
+close.plotly<-plot_ly(bitcoin_s,x=~close_time,y=~close,type="scatter",mode="lines")
+close.plotly
+```
+
+También podemos usar el paquete *dygraphs*
+
+```{r}
+library(dygraphs)
+close.plot.dy<-bitcoin_s%>%select("close_time","close")%>%dygraph()
+close.plot.dy
+```
+
+
+Hemos hecho gráficas básicas con 3 paquetes diferentes. Si bien usted puede pensar que hay una mejor que otra, cada paquete tiene funcionalidades distintas. Por ejemplo, con *dygraphs* usted solo puede graficar datos temporales. 
+
+Por ejemplo, ahora queremos una gráfica que nos muestre el número de veces qeu el precio subió y el número de veces que el precio bajó. 
+
+```{r}
+ggplot(bitcoin_s,aes(direccion))+geom_bar()
+```
+
+
+En el módulo de visualización entraremos de lleno a modificar las gráficas anteriores y dejarlas listas para sorprender a nuestra audiencia
+
+### Algoritmo de predicción
+
+Hay muchos algoritmos, es decir formulas, para alcanzar nuestro objetivo. Cuál es el mejor, depende del propósito, los datos qeu tenemos, nuestros recursos computacionales, y el grado de error que podemos tolerar. Usaremos el algoritmo *naive bayes*.
+
+```{r}
+library(caret)
+library(caTools)
+library(e1071)
+bitcoin_model<-bitcoin_s%>%na.omit()
+split<-sample(c(TRUE,FALSE),nrow(bitcoin_model),replace=TRUE,prob=c(0.7,0.3))
+train<-subset(bitcoin_model,split=="TRUE")
+test<-subset(bitcoin_model,split=="FALSE")
+set.seed(120)
+classifier<-naiveBayes(move~rsi,data=train)
+y_pred <- predict(classifier, newdata = test)
+cm <- table(test$move, y_pred)
+cm
+```
+
+Como vemos, el modelo en la data de prueba tiene un desempeño no tan satisfactorio, su *accuracy* es del orden del 50%. 
+
+## Para terminar
+
+En las sesiones que siguen profundizaremos en cada uno de los aspectos que hemos desarrollado en esta sesión. 
+

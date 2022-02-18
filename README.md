@@ -20,7 +20,7 @@ Este es un taller introductorio al análisis de datos en R y Python. Está dirig
 - Tarea de agrupamiento en R: Abril 29
 - Tarea de agrupamiento en Python: Mayo 6
 
-Usaremos Discord para interactuar y colaborar 
+Usaremos Discord para interactuar y colaborar [ACÁ](https://discord.gg/ccHyeFvD7g)
 
 
 ## Lecturas
