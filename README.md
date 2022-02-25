@@ -11,6 +11,8 @@ Este es un taller introductorio al análisis de datos en R y Python. Está dirig
 
 - Introducción a R: Febrero 18 [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/01-intro_R.html)
 - Introducción a Python: Febrero 25
+[Lectura](https://github.com/keynes37/Notas_clase/blob/main/Kribeendatos_Class01.ipynb)
+[Datos](https://github.com/caribe-en-datos/viernes_code/tree/main/data)
 - Data wrangling en R: Marzo 4
 - Data wrangling en Python: Marzo 11
 - Visualización en R: Marzo 18
