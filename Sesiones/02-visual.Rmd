@@ -1,0 +1,66 @@
+---
+title: 'Visualización'
+author: "Andrés Vargas"
+date: "`r Sys.Date()`"
+output: rmdformats::downcute
+link-citations: true
+---
+
+```{r setup_prog, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  comment = NA, 
+  warning = FALSE, 
+  message = FALSE
+    )
+library(fontawesome)
+here::i_am("Sesiones/02-visual.Rmd")
+library(here)
+here()
+```
+
+# Objetivo de la sesión
+
+Comunicar visualmente condiciones del mercado laboral colombiano
+
+# Pasos
+
+
+- `r fa('bomb')` Calcular las estadísticas que deseamos mostrar
+
+- `r fa('bomb')` Escoger el mejor tipo de gráfico para entregar el mensaje
+
+- `r fa('bomb')` Graficar
+
+- `r fa('bomb')` Acompañar el gráfico de un texto breve con el mensaje clave
+
+
+# ¿Qué queremos mostrar?
+
+El propósito es 
+
+- Mostrar la evolución temporal de las tasas de desempleo para diferentes grupos poblacionales
+
+- Comparar los ingresos laborales por nivel educativo
+
+## Evolución temporal de las tasas de desempleo
+
+**1** Cargamos los datos
+
+```{r}
+baq1<-readRDS(here("data","baq_b1.rds"))
+baq2<-readRDS(here("data","baq_b2.rds"))
+wage<-load(here("data","wagew.rda"))
+```
+
+
+**2** Calcular la tasa de desempleo para hombres y mujeres
+
+```{r}
+library(dplyr)
+library(haven)
+baq<-baq1%>%left_join(baq2,by=c("directorio","secuencia_p","orden"))
+baq<-baq%>%mutate(sexo=if_else(p6020==1,"Hombre","Mujer"))
+tds<-baq%>%filter(inac==0)%>%select(fecha,ocu,deso,sexo,fex_c_2011)%>%group_by(fecha,sexo)%>%summarise(td=weighted.mean(deso,fex_c_2011,na.rm=TRUE))%>%ungroup
+
+```
+
