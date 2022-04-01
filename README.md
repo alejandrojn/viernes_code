@@ -14,7 +14,7 @@ Este es un taller introductorio al análisis de datos en R y Python. Está dirig
 [Lectura](https://github.com/keynes37/Notas_clase/blob/main/Kribeendatos_Class01.ipynb)
 [Datos](https://github.com/caribe-en-datos/viernes_code/tree/main/data)
 - Data wrangling en R: Marzo 4
-- Data wrangling en Python: Marzo 11
+- Data wrangling en Python: Marzo 11 [Lectura](https://github.com/keynes37/GuideEconometria/blob/main/KaribeendatosClass02.ipynb)
 - Visualización en R: Marzo 18
 - Visualización en Python: Abril 1
 - Tarea de clasificación en R: Abril 8
