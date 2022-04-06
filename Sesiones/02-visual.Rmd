@@ -64,3 +64,14 @@ tds<-baq%>%filter(inac==0)%>%select(fecha,ocu,deso,sexo,fex_c_2011)%>%group_by(f
 
 ```
 
+**3** Graficar
+
+```{r}
+library(ggplot2)
+mp6040<-mean(baq$p6040)
+mesc<-mean(baq$esc,na.rm=TRUE)
+baq%>%filter(inac==0)%>%ggplot(aes(x=p6040,y=esc,color=factor(deso)))+geom_point()+geom_vline(xintercept=mp6040, linetype="dashed")+
+  geom_hline(yintercept=mean(mesc),linetype="dashed")+theme_minimal()
+```
+
+
