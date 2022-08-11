@@ -1,0 +1,147 @@
+---
+title: "Introducción al análisis de datos en R"
+Author: Andrés Vargas
+output: rmdformats::downcute
+---
+
+```{r setup_prog, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  comment = NA, 
+  warning = FALSE, 
+  message = FALSE
+    )
+library(fontawesome)
+here::i_am("Sesiones/01-intro.Rmd")
+library(here)
+here()
+```
+
+# Flujo típico de un proyecto
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.cap="Flujo simple de un proyecto"}
+library(DiagrammeR)
+grViz(diagram = "digraph flowchart {
+
+node [fontname = helvetica, shape = oval, style=filled,fillcolor = lightblue, color=lightblue]
+Pregunta
+Datos
+Algoritmo
+Comunicación
+
+Pregunta->Datos->Algoritmo->Comunicación
+}")
+```
+
+# Nuestro primer (mini)proyecto
+
+
+Sabemos que en Colombia la inflación se ha acelerado, sin embargo, no en todas las ciudades se ha comportado de la misma manera. 
+
+
+**1. Pregunta** ¿Cómo ha diferido el comportamiento de la inflación anual entre ciudades del Caribe y el centro?
+
+
+Para responder esta pregunta procederémos de la siguiente manera
+
+- Paso 1: Conseguir los datos relevantes. En este caso, el IPC por ciudades calculado por el [DANE](https://www.dane.gov.co/index.php/estadisticas-por-tema/precios-y-costos/indice-de-precios-al-consumidor-ipc/ipc-actualizacion-metodologica-2019)
+
+- Paso 1: Elegir 3 ciudades
+
+- Paso 2: Calcular la inflación anual
+
+- Paso 3: Decidir como comunicamos nuestro hallazgo. En este caso, haremos una gráfica
+
+
+
+**2. Datos** Usamos el Índice de Precios al Consumidor, IPC, calculado mensualmente por el DANE. En el Repositorio del curso puede descargar los datos [IPC](https://github.com/caribe-en-datos/viernes_code/blob/main/data/ipc.xls) 
+
+En esta fase debemos limpiar y organizar los datos para poder realizar el análisis. Esta parte es muy importante, a veces no es tan emocionante, pero es imprescindible. Como en todo modelo, Si entra basura sale basura. 
+
+- Paso 1: Cargar los datos. Siempre fíjese bien en el formato de los datos. En este caso el archivo de origen es excel, *xlsx*
+
+```{r, load, message=FALSE, warning=FALSE}
+library(readxl)
+ipc <- read_excel("C:/Users/andresmv/OneDrive - Universidad del Norte/Drive/Uninorte/Uninorte-docencia/Data analytics/viernes_code/viernes_code/data/ipc.xls")
+head(ipc)
+```
+
+
+`r fa("r-project", fill = "steelblue")` es un lenguaje orientado a objetos. En nuestro casso, el objeto *ipc* que observamos en la ventana *Environment* es del tipo dataframe. Es ecir, una arreglo matricial de datos, donde en cada fila tenemos las observaciones y en cada columna las variables. 
+
+
+```{r}
+class(ipc)
+```
+
+- Paso 2: elegir 3 ciudades. 
+
+
+```{r, ciudades, message=FALSE, warning=FALSE}
+library(dplyr)
+ipcs<-filter(ipc,ciudad=="BARRANQUILLA" | ciudad=="BOGOTÁ, D.C." | ciudad=="CALI")
+```
+
+
+- Paso 3: Crear variables
+
+
+En la base de datos tenemos una columna que identifica el año y otra que identifica el mes. Necesitamos tener una nueva columna que tenga la fecha completa
+
+
+```{r, message=FALSE, warning=FALSE}
+library(lubridate)
+ipcs$dia<-1
+ipcs<-mutate(ipcs,date=make_date(year,mes,dia))
+
+```
+
+
+**3. "Algoritmo"**
+
+Recuerde que la inflación se computa como la variación porcentual de IPC, y en este caso la variación se toma comparando el mes de un año con el mismo mes del año anterior. Así, por ejemplo, la inflación anual de agosto 2002 sería
+
+
+$$
+Inflación_{ag22}=\dfrac{ipc_{ag22}}{ipc_{ago21}}-1
+$$
+
+Para ilustrar, hagamos el cálculo únicamente para la ciudad de Barranquilla
+ 
+
+```{r}
+baq<-filter(ipcs,ciudad=="BARRANQUILLA")
+baq<-mutate(baq,inf=(ipc/lag(ipc,n=12L))-1)
+```
+
+
+
+El cálculo lo debemos hacer para cada ciudad. Teniendo en cuenta que nuestros datos están estructurados en formato largo (las ciudades son categorías de la variable *ciudad*). Para ello, ampliaremos el código anterior con la función *group_by*
+
+
+```{r}
+ipcs<-ipcs%>%group_by(ciudad)%>%mutate(inf=(ipc/lag(ipc,n=12L))-1)
+```
+
+
+**4. Comunicación**
+
+Vamos a comunicar nuestro resultado usando una gráfica de lineas que muestre la evolución temporal de la inflación para cada ciudad. Usaremos la biblioteca *ggplot2* para graficar. Primero ilustramos con el gráfico únicamente para la ciudad de Barranquilla
+
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+baq<-na.omit(baq)
+baq.plot<-ggplot(baq,aes(x=date,y=inf))+geom_line()
+baq.plot
+```
+
+
+El gráfico con las 3 ciudades lo construimos de la siguiente manera
+
+
+```{r, message=FALSE, warning=FALSE}
+ipcs<-na.omit(ipcs)
+ggplot(ipcs,aes(x=date,y=inf,colour=ciudad))+geom_line()
+```
+
+La presentación del gráfico la podemos mejorar, pero eso será tema de otra sesión
