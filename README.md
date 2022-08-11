@@ -9,6 +9,6 @@ Este es un taller introductorio al análisis de datos en R y Python. Está dirig
 
 ## Cronograma de actividades
 
-- Introducción a R [Lectura]()
+- Introducción a R [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/01-Intro.html)
 
 
