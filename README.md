@@ -5,6 +5,8 @@ Presentaciones y archivos del curso Introducción al análisis de datos en R y P
 
 Este es un taller introductorio al análisis de datos en R y Python. Está dirigido principalmente a economistas :woman_technologist: :man_technologist:. La filosofía de este curso es "aprender haciendo" :nerd_face:
 
+Discord: https://discord.gg/UGc9jCYuhR 
+
 
 
 ## Cronograma de actividades
