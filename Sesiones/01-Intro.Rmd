@@ -16,7 +16,10 @@ library(here)
 here()
 ```
 
+
 # Flujo típico de un proyecto
+
+<br>
 
 ```{r, echo=FALSE, warning=FALSE,message=FALSE, fig.cap="Flujo simple de un proyecto"}
 library(DiagrammeR)
@@ -34,6 +37,7 @@ Pregunta->Datos->Algoritmo->Comunicación
 
 # Nuestro primer (mini)proyecto
 
+<br>
 
 Sabemos que en Colombia la inflación se ha acelerado, sin embargo, no en todas las ciudades se ha comportado de la misma manera. 
 
@@ -51,7 +55,7 @@ Para responder esta pregunta procederémos de la siguiente manera
 
 - Paso 3: Decidir como comunicamos nuestro hallazgo. En este caso, haremos una gráfica
 
-
+<br>
 
 **2. Datos** Usamos el Índice de Precios al Consumidor, IPC, calculado mensualmente por el DANE. En el Repositorio del curso puede descargar los datos [IPC](https://github.com/caribe-en-datos/viernes_code/blob/main/data/ipc.xls) 
 
@@ -59,34 +63,42 @@ En esta fase debemos limpiar y organizar los datos para poder realizar el análi
 
 - Paso 1: Cargar los datos. Siempre fíjese bien en el formato de los datos. En este caso el archivo de origen es excel, *xlsx*
 
+<br>
+
 ```{r, load, message=FALSE, warning=FALSE}
 library(readxl)
 ipc <- read_excel("C:/Users/andresmv/OneDrive - Universidad del Norte/Drive/Uninorte/Uninorte-docencia/Data analytics/viernes_code/viernes_code/data/ipc.xls")
 head(ipc)
 ```
 
+<br>
 
 `r fa("r-project", fill = "steelblue")` es un lenguaje orientado a objetos. En nuestro casso, el objeto *ipc* que observamos en la ventana *Environment* es del tipo dataframe. Es ecir, una arreglo matricial de datos, donde en cada fila tenemos las observaciones y en cada columna las variables. 
 
+<br>
 
 ```{r}
 class(ipc)
 ```
+<br>
 
 - Paso 2: elegir 3 ciudades. 
 
+<br>
 
 ```{r, ciudades, message=FALSE, warning=FALSE}
 library(dplyr)
 ipcs<-filter(ipc,ciudad=="BARRANQUILLA" | ciudad=="BOGOTÁ, D.C." | ciudad=="CALI")
 ```
 
+<br>
 
 - Paso 3: Crear variables
 
 
 En la base de datos tenemos una columna que identifica el año y otra que identifica el mes. Necesitamos tener una nueva columna que tenga la fecha completa
 
+<br>
 
 ```{r, message=FALSE, warning=FALSE}
 library(lubridate)
@@ -95,38 +107,44 @@ ipcs<-mutate(ipcs,date=make_date(year,mes,dia))
 
 ```
 
+<br>
 
 **3. "Algoritmo"**
 
 Recuerde que la inflación se computa como la variación porcentual de IPC, y en este caso la variación se toma comparando el mes de un año con el mismo mes del año anterior. Así, por ejemplo, la inflación anual de agosto 2002 sería
 
+<br>
 
 $$
 Inflación_{ag22}=\dfrac{ipc_{ag22}}{ipc_{ago21}}-1
 $$
 
 Para ilustrar, hagamos el cálculo únicamente para la ciudad de Barranquilla
- 
+
+<br> 
 
 ```{r}
 baq<-filter(ipcs,ciudad=="BARRANQUILLA")
-baq<-mutate(baq,inf=(ipc/lag(ipc,n=12L))-1)
+baq<-mutate(baq,inf=((ipc/lag(ipc,n=12L))-1)*100)
 ```
 
-
+<br>
 
 El cálculo lo debemos hacer para cada ciudad. Teniendo en cuenta que nuestros datos están estructurados en formato largo (las ciudades son categorías de la variable *ciudad*). Para ello, ampliaremos el código anterior con la función *group_by*
 
+<br>
 
 ```{r}
-ipcs<-ipcs%>%group_by(ciudad)%>%mutate(inf=(ipc/lag(ipc,n=12L))-1)
+ipcs<-ipcs%>%group_by(ciudad)%>%mutate(inf=((ipc/lag(ipc,n=12L))-1)*100)
 ```
 
+<br>
 
 **4. Comunicación**
 
 Vamos a comunicar nuestro resultado usando una gráfica de lineas que muestre la evolución temporal de la inflación para cada ciudad. Usaremos la biblioteca *ggplot2* para graficar. Primero ilustramos con el gráfico únicamente para la ciudad de Barranquilla
 
+<br>
 
 ```{r, message=FALSE, warning=FALSE}
 library(ggplot2)
@@ -134,14 +152,42 @@ baq<-na.omit(baq)
 baq.plot<-ggplot(baq,aes(x=date,y=inf))+geom_line()
 baq.plot
 ```
-
+<br>
 
 El gráfico con las 3 ciudades lo construimos de la siguiente manera
 
+<br>
 
 ```{r, message=FALSE, warning=FALSE}
 ipcs<-na.omit(ipcs)
-ggplot(ipcs,aes(x=date,y=inf,colour=ciudad))+geom_line()
+inf.plot<-ggplot(ipcs,aes(x=date,y=inf,colour=ciudad))+geom_line()
+inf.plot
 ```
 
-La presentación del gráfico la podemos mejorar, pero eso será tema de otra sesión
+<br>
+
+La presentación del gráfico la podemos mejorar. 
+
+<br>
+
+```{r, echo=FALSE}
+inf.plot2<-inf.plot+labs(title="Inflación anual",subtitle="(2020-2022)", x="",y="%",color="",
+              caption="Fuente: DANE")+theme(legend.position="bottom")+theme_classic()
+inf.plot2
+```
+
+<br>
+
+También la podemos hacer interactiva
+
+<br>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(plotly)
+inf.inter<-plot_ly(ipcs,x=~date,y=~inf,color=~ciudad, type="scatter",mode="lines")
+inf.inter%>%layout(title="Inflación Anual",xaxis=list(title="",zeroline=TRUE,
+                                                      yaxis=list(title="%")))
+```
+
+
+
