@@ -1,0 +1,205 @@
+---
+title: "Sesión 2"
+Author: Andrés Vargas
+output: rmdformats::downcute
+---
+
+```{r setup_prog, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  comment = NA, 
+  warning = FALSE, 
+  message = FALSE
+    )
+library(fontawesome)
+here::i_am("Sesiones/02-ses_2.Rmd")
+library(here)
+here()
+```
+
+# Objetivo de la sesión
+
+<br>
+
+El ejercicio de esta sesión pretende afianzar los conocimientos y habilidades para
+
+- Organizar y limpiar los datos
+
+- Crear variables
+
+- Comunicar los hallazgos
+
+
+# Aplicación: evolución reciente del crecimiento económico en Colombia
+
+<br>
+
+Según los últimos datos del [DANE](https://www.dane.gov.co/index.php/estadisticas-por-tema/cuentas-nacionales/cuentas-nacionales-trimestrales/pib-informacion-tecnica) la economía alcanzó una tasa de crecimiento anual de 12.6% en el segundo trimestre de 2022. Este es un desempeño notable. En esta sesión queremos responder las siguientes preguntas
+
+<br>
+
+1. ¿Cómo se compara este crecimiento con el de periodos anteriores?
+
+2. ¿Cómo ha sido la contribución de los componentes del gasto al crecimiento del PIB?
+
+3. ¿Cuánto ha sido la participación de cada componente del gasto en el PIB?
+
+<br>
+
+# Datos
+
+<br>
+
+Trabajaremos con la serie trimestra del PIB por el lado del gasto a precios constantes. El archivo original publicado por el DANE lo encuentra [acá](https://www.dane.gov.co/index.php/estadisticas-por-tema/cuentas-nacionales/cuentas-nacionales-trimestrales/pib-informacion-tecnica). El archivo para trabajar lo encuentra lo puede descargar del [REPO](https://github.com/caribe-en-datos/viernes_code/blob/main/data/PIB.xlsx)
+
+<br> 
+
+# Paso a Paso
+
+<br>
+
+1. Cargue los datos
+
+```
+library(readxl)
+pib<-read_excel()
+```
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(readxl)
+pib<-read_excel(here("data","PIB.xlsx"))
+
+```
+
+<br>
+
+2. La tasa de crecimiento anual del PIB, con datos trimestrales, la calculamos como
+
+$$
+g_Y=\dfrac{Y_t}{Y_{t-4}}-1
+$$
+
+<br>
+
+```
+library(dplyr)
+pib<-mutate()
+```
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+pib<-pib%>%mutate(gy=Y/lag(Y,n=4)-1)
+
+```
+
+3. Graficamos la tasa de crecimiento del PIB
+
+```
+library(ggplot2)
+ggplot(pib,aes(x=,y=))+geom_¿?()
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+pib%>%na.omit()%>%ggplot(aes(x=trimestre,y=gy))+geom_line()
+
+```
+
+<br>
+
+La gráfica la puede editar para colocarle título, nombres de los ejes, fuente de los datos, cambiar colores, fondo, etc.
+
+<br>
+
+Con la gráfica anterior puede responder la pregunta 1. Escriba su respuesta
+
+<br>
+
+4. Para la pregunta 2 debemos calcular la contribución de cada componente del gasto al crecimiento del PIB. Para ello, debemos tener presente la identidad contable del PIB por el lado del gasto
+
+$$
+Y_t=C_t+I_t+G_t+X_t-M_t
+$$
+<br>
+
+Con un poco de algebra podemos escribir
+
+$$
+\dfrac{Y_t-Y_{t-4}}{Y_{t-4}}=\dfrac{C_{t-4}}{Y_{t-4}}\dfrac{C_{t}-C_{t-4}}{C_{t-4}}+\dfrac{I_{t-4}}{Y_{t-4}}\dfrac{I_{t}-I_{t-4}}{I_{t-4}}+\dfrac{G_{t-4}}{Y_{t-4}}\dfrac{G_{t}-G_{t-4}}{G_{t-4}}+\dfrac{I_{t-4}}{Y_{t-4}}\dfrac{I_{t}-I_{t-4}}{I_{t-4}}+\dfrac{X_{t-4}}{Y_{t-4}}\dfrac{X_{t}-X_{t-4}}{X_{t-4}}-\dfrac{M_{t-4}}{Y_{t-4}}\dfrac{M_{t}-M_{t-4}}{M_{t-4}}
+$$
+<br>
+
+Es decir, que la tasa de crecimiento del PIB es la suma ponderada de las tasas de crecimiento de cada componente del gasto
+
+<br>
+
+5. Calcule la participación de cada componente del gasto en el PIB
+
+```
+# FORMA 1
+pib$wc<-pib$C/pib$Y
+
+# FORMA 2
+pib<-pib%>%mutate(wc=C/Y)
+
+```
+
+
+```{r, echo=FALSE}
+pib<-pib%>%mutate(wc=C/Y,wi=I/Y,wg=G/Y,wx=X/Y,wm=-M/Y)
+```
+
+<br>
+
+6. Calcule la contribución de cada componente $\dfrac{C_{t-4}}{Y_{t-4}}\dfrac{C_{t}-C_{t-4}}{C_{t-4}}$
+
+<br>
+
+```
+
+```
+
+
+```{r, echo=FALSE}
+pib<-pib%>%mutate(wgc=(C/lag(C,n=4)-1)*lag(wc,n=4),
+                  wgi=(I/lag(I,n=4)-1)*lag(wi,n=4),
+                  wgg=(G/lag(G,n=4)-1)*lag(wg,n=4),
+                  wgx=(X/lag(X,n=4)-1)*lag(wx,n=4),
+                  wgm=(M/lag(M,n=4)-1)*lag(wm,n=4))
+```
+
+<br>
+
+5. Graficar las contribuciones de cada componente a lo largo del tiempo
+
+<br>
+
+Para hacer este gráfico necesitamos cambiar la estructura de nuestros datos, de formato ancho (wide) a largo (long). Esto lo hacemos con la función *pivot_longer* del paquete **Tydiverse**
+
+<br>
+
+```{r}
+piblong<-pib%>%na.omit()%>%select(trimestre,gy,wgc,wgi,wgg,wgx,wgm)
+piblong<-pivot_longer(piblong,!c(trimestre,gy), names_to="comp",values_to="value")
+```
+
+<br>
+
+Haremos un gráfico de barras, donde los componentes de gasto están apilados (*stacked*) por trimestre. Complete el código siguiente
+
+<br>
+
+```
+ggplot(,aes(x=,y=,fill=comp))+geom_bar(stat="identity")+geom_line(aes(y=gy),size=1)
+
+```
+
+
+```{r,echo=FALSE}
+ggplot(piblong,aes(x=trimestre,y=value,fill=comp))+geom_bar(stat="identity")+geom_line(aes(y=gy),size=1)
+```
+
+<br>
+
+- ¿Qué modificaciones estéticas le haría al gráfico?
+
+- Interprete su hallazgo
