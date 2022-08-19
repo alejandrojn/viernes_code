@@ -13,4 +13,6 @@ Discord: https://discord.gg/UGc9jCYuhR
 
 - Introducción a R [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/01-Intro.html)
 
+- Sesión 2: algo de data wrangling y visualización [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/02-ses_2.html)
+
 
