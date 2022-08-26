@@ -1,0 +1,323 @@
+---
+title: "Sesión 3"
+Author: Andrés Vargas
+output: rmdformats::downcute
+---
+```{r setup_prog, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(
+  comment = NA, 
+  warning = FALSE, 
+  message = FALSE
+    )
+library(fontawesome)
+```
+
+# Objetivo de la sesión
+
+<br>
+
+El ejercicio de esta sesión pretende afianzar los conocimientos y habilidades para
+
+- Organizar y limpiar los datos
+
+- Pegar bases de datos
+
+- Crear variables
+
+- Visualización interactiva
+
+<br>
+
+# Aplicación: emisiones de GEI, comparativo entre paises
+
+<br>
+
+El cambio climático de origen antropogénico se debe a la emsión de gases efecto invernadero (CO2, metano, oxido nitroso, otros). Vaya [acá](https://www.epa.gov/ghgemissions/overview-greenhouse-gases) para una explicación de cada uno de ellos. A nivel global, la quema de combustibles fósiles para transporte y energía es la fuente de emisiones más importante. En Colombia, una contribución importante es la deforestación, ver algunas cifrás [acá](http://cifras.siac.gov.co/Portal-SIAC-web/faces/cambioclimatico_inicio.xhtml). Casi todos los paises del mundo se han comprometido a reducir sus emisiones, con el objetivo global de evitar el aumento de la temperatura continental promedio por encima de $2^oC$ en relación los niveles pre-industriales [META](https://climateactiontracker.org/methodology/paris-temperature-goal/). 
+
+Nuestras preguntas son las siguientes
+
+<br>
+
+1. ¿Cuáles son los paises que emiten más GEI?
+
+2. ¿Cuáles son los paises que emiten más GEI en términos per cápita?
+
+3. ¿Cuál es la relación entre el ingreso y las emisiones?
+
+4. ¿Cómo han evolucionado las emisiones totales globales en las dos últimas décadas?
+
+5. ¿Ha aumentado la eficiencia energética de la producción?
+
+<br>
+
+# Datos
+
+Usaremos los datos provistos por el Banco Mundial a través de los [World Development Indicators](https://databank.worldbank.org/source/world-development-indicators). En el [REPO](https://github.com/caribe-en-datos/viernes_code/tree/main/data) descargue las bases *WDI_CO2.xlsx* y *gdp_percapital.xlsx*
+
+<br>
+
+# Paso a paso
+
+<br>
+
+1. Cargue los datos
+
+<br>
+
+```
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(readxl)
+wdi<-read_excel("C:/Users/andresmv/Desktop/vc/WDI_CO2_s.xlsx")
+gdp<-read_excel("C:/Users/andresmv/Desktop/vc/gdp_percapita.xlsx")
+```
+
+<br>
+
+2. Dejar los datos a punto para analizar
+
+<br>
+
+2.1 Ajustar los nombres de las columnas
+
+<br>
+
+Es recomendable que las columnas tengan nombres sencillos, cortos, y de fácil recordación o identificación. Empezaremos con los datos WDI. Cambiaremos los nombres de las columnas iniciales, y le quitamos el [YR...] a las columnas de año. 
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+colnames(wdi)[2]<-"serie"
+colnames(wdi)[3]<-"country"
+colnames(wdi)[4]<-"ccode"
+
+colnames(wdi)[5]<-1997
+
+#Para no hacerlo año por año, usamos un loop
+i<-5 
+while (i <29){
+  i<-i+1
+  colnames(wdi)[i]<-1997+i-5
+}
+```
+
+<br>
+
+La columna *serie* contiene las variables que nos interesa analizar. Les asignamos nombres cortos y de fácil recordación (para mí al menos). Haremos un condicional anidado, es decir, un *ifelse* dentro de otro *ifelse*
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+wdi<-wdi%>%mutate(variable=ifelse(serie=="EN.ATM.GHGT.KT.CE","total_ghg",ifelse(serie=="EN.ATM.CO2E.KT","total_co2",
+                                                                      ifelse(serie=="EN.ATM.CO2E.PP.GD.KD","co2_pib",
+                                                                        ifelse(serie=="SP.POP.TOTL","pop","")))))  
+```
+<br>
+
+Note que la base de datos está en formato ancho. Para el análisis es mejor el formato largo. Antes de hacer el *reshape* eliminamos las columnas innecesarias
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+wdi<-wdi%>%select(-c(`Series Name`,serie,))
+```
+
+<br>
+
+2.2 Cambiar la orientación de los datos: wide to long
+
+<br>
+
+Para hacer el cambio de ancho a largo, lo haremos en dos pasos. Antes de hacerlo en código, dibuje en una hoja como desea que quede estructurada su base de datos.
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+
+# Paso 1
+
+wdi<-wdi%>%pivot_longer(!c(country,ccode,variable),names_to="year",values_to="value")
+
+wdi<-wdi%>%filter(!is.na(country)) # eliminamos los valores missing para la columna country
+
+# Paso 2
+wdi1<-wdi%>%pivot_wider(id_cols=c(country,ccode,year),names_from=variable,values_from=value)
+
+```
+
+<br>
+
+Note que en sus datos aparecen celdas que contienen dos puntos (..). Estos son valores perdidos, *missing*, así que debemos declararlos adecuadamente para que `r fa("r-project", fill = "steelblue")` los entienda como tal
+
+<br>
+
+```{r}
+wdi1[wdi1==".."]<-NA
+```
+
+<br>
+
+Finalmente, debemos asegurarnos que los datos están en la calse que corresponde a la característica de la variable. Es decir, que las variables cuantitativas sean reconocidas como numéricas, por ejemplo. Veamos la clase de cada variable
+
+<br>
+
+```{r}
+class(wdi$year) # Si lo hacemos para una sola columna
+```
+<br>
+
+```{r}
+sapply(wdi1,class) # si lo hacemos para todas las columnas
+```
+
+<br>
+
+Note que las variables están como *character*, pero las necesitamos como numéricas, pues son de carácter cuantitativo
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+wdi1<-wdi1%>%mutate(total_ghg=as.numeric(total_ghg)) #Así lo hacemos columna por columna
+class(wdi1$total_ghg)
+
+i<-c(3:7)
+wdi1[,i]<-apply(wdi1[,i],2,function(x)as.numeric(x)) # así hacemos todas las columnas de una vez
+sapply(wdi1,class)
+
+```
+
+<br>
+
+Nuestros datos de esta base ya quedaron listos. Hay que hacer los mismos ajustes para la base *gdp*. Ya sabe coo enfrentarlo. 
+
+<br>
+
+```
+
+```
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+colnames(gdp)[1]<-"country"
+colnames(gdp)[2]<-"ccode"
+colnames(gdp)[4]<-"serie"
+
+colnames(gdp)[5]<-1997
+i<-5
+while (i <29){
+  i<-i+1
+  colnames(gdp)[i]<-1997+i-5
+}
+
+gdp<-gdp%>%select(-c(`Series Name`,serie,))
+gdp<-gdp%>%pivot_longer(!c(country,ccode),names_to="year",values_to="gdp")
+gdp[gdp==".."]<-NA
+gdp<-gdp%>%mutate(gdp=as.numeric(gdp),year=as.numeric(year))
+```
+
+<br>
+
+2.3 Pegar las bases de datos
+
+<br>
+
+Queremos pegar la base *gdp* a la base *wdi* para ello debemos determinar las variables que identifican una observación única y que son comunes en las dos bases de datos. Es decir, las llaves. En este caso, note que la combinación ccode year definen una única observación que es común entre las bases de datos. 
+
+Para hacer esto tenemos varias posibilidades. Está la función *merge* y la función *join*. Usaremos esta última. Ustede debe practicar y replciar el resultado usando *merge*
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+wdi1<-left_join(wdi1,gdp,by=c("ccode","year","country"))
+```
+
+<br>
+
+Ya tenemos la base completa. 
+
+<br>
+
+# Paso 3 Analizar los datos
+
+<br>
+
+- Pregunta 1 ¿Cuáles son los paises que emiten más GEI?
+
+<br>
+
+Vamos a calcularlo para el año 2019, que es el último para el cual tenemos datos. Graficaremos usando [plotly](https://plotly.com/r/)
+
+```{r, message=FALSE, warning=FALSE}
+library(plotly)
+ghg.plot<-wdi1%>%filter(year==2019)%>%plot_ly(y=~total_ghg,x=~ccode,type="bar",name="Total")
+ghg.plot
+```
+
+<br>
+
+Ordenemos las barras en forma descendente
+
+<br>
+
+```{r, message=FALSE, warning=FALSE}
+ghg.plot<-ghg.plot%>%
+  layout(xaxis=list(categoryorder="total descending"))
+ghg.plot
+```
+
+<br>
+
+- Pregunta 2 ¿Cuáles son los paises que emiten más GEI en términos per cápita?
+
+<br>
+
+Cree la variable de emisiones per cápita usando las variables *total_ghg* y *pop*. Luego grafique con orden descendente
+
+```
+
+```
+```{r, echo=FALSE}
+wdi1<-wdi1%>%filter(year<2020)%>%mutate(ghgpc=total_ghg/pop)
+ghgpc<-wdi1%>%filter(year==2019)%>%plot_ly(y=~ghgpc,x=~ccode,type="bar", name="PC")%>%
+  layout(xaxis=list(categoryorder="total descending"))
+ghgpc
+```
+
+<br>
+
+- Pregunta 3 ¿Cuál es la relación entre el ingreso y las emisiones?
+
+<br>
+
+```{r}
+gy<-wdi1%>%filter(year==2019)%>%plot_ly(x=~gdp,y=~ghgpc,type="scatter", text=~ccode)
+gy
+```
+
+<br>
+
+- Pregunta 4 ¿Cómo han evolucionado las emisiones totales globales en las dos últimas décadas?
+
+<br>
+
+Para esto debemos calcular las emisiones totales por año. En cada año hacemos la suma. Para ello agruparemos los datos por año, usando la función *group_by()*
+
+<br>
+
+```{r}
+total<-wdi1%>%group_by(year)%>%summarise(total=sum(total_ghg,na.rm=TRUE))
+ghgtot.plot<-total%>%plot_ly(x=~year,y=~total,type="scatter",mode="lines")
+ghgtot.plot
+```
+
+<br>
+
+Podemos colocar nuestras 4 gráficas en un solo gráfico 
+
+<br>
+
+```{r}
+subplot(ghg.plot,ghgpc,gy,ghgtot.plot,nrows=2)
+```
+
