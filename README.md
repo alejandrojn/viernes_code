@@ -15,4 +15,6 @@ Discord: https://discord.gg/UGc9jCYuhR
 
 - Sesión 2: algo de data wrangling y visualización [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/02-ses_2.html)
 
+- Sesión 3 [Lectura](https://raw.githack.com/caribe-en-datos/viernes_code/main/Sesiones/03-ses_3.html)
+
 
